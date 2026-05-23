@@ -12,9 +12,10 @@
 
 | Nombre completo | Código | Correo institucional |
 |-----------------|--------|----------------------|
-| [Estudiante 1]  |        |                      |
-| [Estudiante 2]  |        |                      |
-| [Estudiante 3]  |        |                      |
+| Adriana Milena Noscue Dagua  |     2477336  |         adriana.noscue@correounivalle.edu.co             |
+| Sebastián Cucalon Astorquiza |     2477344  |           sebastian.cucalon@correounivalle.edu.co        |
+| Nicolle Camila Hoyos Puin    |     2380608  |             nicolle.hoyos@correounivalle.edu.co          |
+| Santiago Torres Rojas        |     2380301  |          santiago.torres.rojas@correounivalle.edu.co     |
 
 **Obligatorio:** editar esta tabla con los datos reales de todos los integrantes.
 Si un integrante no aparece aquí, su nota individual será 0.0.
