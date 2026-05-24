@@ -38,4 +38,6 @@ class AsignacionAulasParTest extends AnyFunSuite {
     val (_, costo) = asignacionOptimaPar(c1, a1, d1, w)
     assert(costo <= 37)
   }
+
+
 }

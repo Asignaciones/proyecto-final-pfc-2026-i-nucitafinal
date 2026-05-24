@@ -134,13 +134,68 @@ object AsignacionAulas {
   /**
    * Genera todas las asignaciones completas posibles: vectores en {0,..,m-1}^n.
    * El tamaño del resultado es m^n.
+   *
+   * esta  funcion usa recursion para generar todas las combinacioens posibles de asignaciones
+   * n= cantadidad de cursos
+   * m= cantidad de aulas posibles(0 hasta m-1)
    */
-  def generarAsignaciones(n: Int, m: Int): Vector[Asignacion] = ???
+  def generarAsignaciones(n: Int, m: Int): Vector[Asignacion] = {
+
+    /* caso base:
+     Si no quedan cursos por asignar( n==0 )
+     se devuelve vector(vector()) es decir con asignacion vacia */
+
+
+    if (n==0)
+      Vector(Vector.empty[Int])
+
+
+
+    else {
+
+      /*
+     Llamada recursiva:
+     Genera todas las asignaciones posibles para n-1 cursos.
+     ejemplo:
+     generarAsignaciones(1,3)*/
+
+      val anteriores = generarAsignaciones(n-1,m)
+
+      /*
+     Para cada asignación anterior y para cada aula posible,
+     se crea una nueva asignación agregando el aula al final
+     del vector.*/
+
+      for {
+        asignacion <- anteriores
+        aula <- (0 until m).toVector
+      } yield  asignacion :+ aula
+    }
+  }
 
   /**
    * Devuelve la asignación de mínimo costo y su costo.
    * Usa generarAsignaciones para explorar el espacio.
+
+   * esta funcion busca cual de todas las asignaciones psoibles tiene el menor costo
    */
+
   def asignacionOptima(cursos: Cursos, aulas: Aulas, d: Distancias,
-                       w: Pesos): (Asignacion, Int) = ???
+                       w: Pesos): (Asignacion, Int) = {
+
+    /* Genera todas las asignaciones posibles usando:
+   cantidad de cursos y cantidad de aulas.        */
+
+    val todas = generarAsignaciones(cursos.length, aulas.length)
+
+    /* map recorre cada asignación y crea una tupla:
+   (asignacion, costo)
+   donde el costo se calcula usando costoAsignacion. */
+
+    todas.map{asignacion =>
+        (asignacion, costoAsignacion(cursos, aulas, d, asignacion, w))
+    }
+      .minBy(_._2)
+
+  }
 }
