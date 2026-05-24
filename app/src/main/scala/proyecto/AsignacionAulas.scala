@@ -63,33 +63,73 @@ object AsignacionAulas {
   // ---------------------------------------------------------------------------
 
   /** Devuelve true sii los intervalos [ini1, fin1) y [ini2, fin2) se traslapan. */
-  def solapan(c1: Curso, c2: Curso): Boolean = ???
+  def solapan(c1: Curso, c2: Curso): Boolean = {
+
+    iniCurso(c1) < finCurso(c2) && iniCurso(c2) < finCurso(c1)
+
+  }
 
   /**
    * Número de pares (i, j) con i < j tales que a(i) == a(j) >= 0
    * y los cursos i y j se solapan.
    */
-  def choques(cursos: Cursos, a: Asignacion): Int = ???
+  def choques(cursos: Cursos, a: Asignacion): Int = {
+
+    (0 until cursos.length).flatMap{
+      i => (i + 1 until cursos.length).map{
+        j => if (a(i) == a(j) && a(i) >= 0 && solapan(cursos(i),cursos(j))) 1 else 0}}.sum
+
+  }
 
   /** Cantidad de cursos cuya aula asignada tiene capacidad menor al número de estudiantes. */
-  def capacidadFallida(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = ???
+  def capacidadFallida(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = {
+    cursos.indices.count {i => a(i) >= 0 && capAula(aulas(a(i))) < estCurso(cursos(i))}
+  }
 
   /**
    * Suma de (cap(aula_i) - est(curso_i)) para los cursos asignados
    * con capacidad suficiente.
    */
-  def desperdicio(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = ???
+  def desperdicio(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = {
+
+    cursos.indices.map { i =>
+
+      if (
+        a(i) >= 0 &&
+          capAula(aulas(a(i))) >= estCurso(cursos(i))
+      )
+        capAula(aulas(a(i))) - estCurso(cursos(i))
+      else
+        0
+    }.sum
+  }
 
   /**
    * Ordena los cursos asignados por hora de inicio y suma las distancias
    * entre aulas de cursos consecutivos.
    */
   def movilidad(cursos: Cursos, aulas: Aulas, d: Distancias,
-                a: Asignacion): Int = ???
+                a: Asignacion): Int = {
+    val cursosAsignados = cursos.indices.filter(i => a(i) >= 0)
+      .sortBy(i => iniCurso(cursos(i)))
+
+    cursosAsignados.sliding(2).collect{
+
+      case Vector(i,j) => d(a(i))(a(j))
+    }.sum
+  }
 
   /** Costo total: w_CH * CH + w_CF * CF + w_DE * DE + w_MV * MV. */
   def costoAsignacion(cursos: Cursos, aulas: Aulas, d: Distancias,
-                      a: Asignacion, w: Pesos): Int = ???
+                      a: Asignacion, w: Pesos): Int = {
+    val (wCH, wCF, wDE, wMV) = w
+
+    wCH * choques(cursos, a) +
+      wCF * capacidadFallida(cursos, aulas, a) +
+      wDE * desperdicio(cursos, aulas, a) +
+      wMV * movilidad(cursos, aulas, d, a)
+
+  }
 
   /**
    * Genera todas las asignaciones completas posibles: vectores en {0,..,m-1}^n.
