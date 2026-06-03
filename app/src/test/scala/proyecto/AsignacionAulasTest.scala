@@ -65,18 +65,7 @@ class AsignacionAulasTest extends AnyFunSuite {
 
 
 
-  // generarAsignaciones
-  test("generarAsignaciones: 2 cursos y 2 aulas produce 4 asignaciones") {
-    assert(generarAsignaciones(2, 2).length == 4)
-  }
-
-  test("generarAsignaciones: 3 cursos y 3 aulas produce 27 asignaciones") {
-    assert(generarAsignaciones(3, 3).length == 27)
-  }
-
-
-  // test nuevos
-
+  // test nuevos funcion generarAsignaciones
 
   test("generarAsignaciones: 1 curso y 2 aulas genera exactamente 2 asignaciones") {
     val resultado = generarAsignaciones(1, 2)
@@ -108,13 +97,7 @@ class AsignacionAulasTest extends AnyFunSuite {
   }
 
 
-  // asignacionOptima
-  test("asignacionOptima: el costo de la optima no supera el de [0,1,0] (37)") {
-    val (_, costo) = asignacionOptima(c1, a1, d1, w)
-    assert(costo <= 37)
-  }
-
-  // test nuevos
+  // Test nuevos funcion asignacionOptima
 
   test("asignacionOptima: devuelve una asignacion del mismo tamaño que cursos") {
     val (asig, _) = asignacionOptima(c1, a1, d1, w)

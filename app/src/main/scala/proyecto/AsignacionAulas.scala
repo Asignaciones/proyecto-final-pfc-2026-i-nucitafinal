@@ -146,13 +146,10 @@ object AsignacionAulas {
      se devuelve vector(vector()) es decir con asignacion vacia */
 
 
-    if (n==0)
+    if (n == 0)
       Vector(Vector.empty[Int])
 
-
-
     else {
-
       /*
      Llamada recursiva:
      Genera todas las asignaciones posibles para n-1 cursos.
@@ -168,7 +165,7 @@ object AsignacionAulas {
 
       for {
         asignacion <- anteriores
-        aula <- (0 until m).toVector
+        aula <- 0 until m
       } yield  asignacion :+ aula
     }
   }
