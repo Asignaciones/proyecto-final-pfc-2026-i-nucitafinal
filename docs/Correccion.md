@@ -1,191 +1,223 @@
-# Ejemplo informe de corrección
 
-**Fundamentos de Programación Funcional y Concurrente**  
-Documento realizado por el docente Juan Francisco Díaz.
 
----
+## Argumentación de corrección — Función `generarAsignaciones`
+## Corrección de programa recursivo
 
-## Argumentación de corrección de programas
+La función `generarAsignaciones` es un programa recursivo cuyo parámetro recursivo es el número de cursos `n`.
 
-### Argumentando sobre corrección de programas recursivos
-
-Sea $f : A \to B$ una función, y $A$ un conjunto definido recursivamente (recordar definición de matemáticas discretas I), como por ejemplo los naturales o las listas.
-
-Sea $P_f$ un programa recursivo (lineal o en árbol) desarrollado en Scala (o en cualquier lenguaje de programación) hecho para calcular $f$:
-
-```scala
-def Pf(a: A): B = { // Pf recibe a de tipo A, y devuelve f(a) de tipo B
-  ...
-}
-```
-
-¿Cómo argumentar que \$P_f(a)\$ siempre devuelve \$f(a)\$ como respuesta? Es decir, ¿cómo argumentar que \$P_f\$ es correcto con respecto a su especificación?
-
-La respuesta es sencilla, demostrando el siguiente teorema:
+Sea:
 
 $$
-\forall a \in A : P_f(a) == f(a)
+A(n,m)=\{(a_1,a_2,\dots,a_n)\mid a_i\in\{0,1,\dots,m-1\}\}
 $$
 
-Cuando uno tiene que demostrar que algo se cumple para todos los elementos de un conjunto definido recursivamente, es natural usar **inducción estructural**.
+el conjunto de todas las asignaciones posibles de \(n\) cursos en \(m\) aulas.
 
-En términos prácticos, esto significa demostrar que:
 
-- Para cada valor básico \$a\$ de \$A\$, se tiene que \$P_f(a) == f(a)\$.
-- Para cada valor \$a \in A\$ construido recursivamente a partir de otro(s) valor(es) \$a' \in A\$, se tiene que \$P_f(a') == f(a') \rightarrow P_f(a) == f(a)\$ (hipótesis de inducción).
-
----
-
-#### Ejemplo: Factorial Recursivo
-
-Sea \$f : \mathbb{N} \to \mathbb{N}\$ la función que calcula el factorial de un número natural, \$f(n) = n!\$.
-
-Programa en Scala:
-
-```scala
-def Pf(n: Int): Int = {
-  if (n == 0) 1 else n * Pf(n - 1)
-}
-```
+La especificación de la función consiste en generar exactamente dicho conjunto.
 
 Queremos demostrar que:
 
 $$
-\forall n \in \mathbb{N} : P_f(n) == n!
+\forall n \ge 0:
+\texttt{generarAsignaciones}(n,m)=A(n,m)
 $$
 
-- **Caso base**: \$n = 0\$
+Como el conjunto de valores posibles para \(n\) está definido recursivamente sobre los números naturales, utilizaremos inducción estructural para argumentar la corrección del programa.
 
-$$
-P_f(0) \to 1 \quad \land \quad f(0) = 0! = 1
-$$
 
-Entonces \$P_f(0) == f(0)\$.
+## Caso base
 
-- **Caso inductivo**: \$n = k+1\$, \$k \geq 0\$.
+Si $n = 0$, la función ejecuta:
 
-$$
-P_f(k+1) \to (k+1) \cdot P_f(k)
-$$
+```scala
+Vector(Vector.empty[Int])
+```
 
-Usando la hipótesis de inducción:
+y retorna $\{[]\}$.
 
-$$
-\to (k+1) \cdot k! = (k+1)!
-$$
+Cuando no existen cursos por asignar, la única asignación posible es la asignación vacía. Por definición:
 
-Por lo tanto, \$P_f(k+1) == f(k+1)\$.
+$$A(0,m) = \{[]\}$$
 
-**Conclusión**: \$\forall n \in \mathbb{N} : P_f(n) == n!\$
+Por lo tanto:
+
+$$\texttt{generarAsignaciones}(0,m) = A(0,m)$$
+
+
+
+## Hipótesis de inducción
+
+Supongamos que para algún $k \ge 0$:
+
+$$\texttt{generarAsignaciones}(k,m) = A(k,m)$$
+
+es decir, la función genera correctamente todas las asignaciones posibles de $k$ cursos.
+
+
+
+## Paso inductivo
+
+Debemos demostrar que:
+
+$$\texttt{generarAsignaciones}(k+1,m) = A(k+1,m)$$
+
+La función calcula primero:
+
+```scala
+val anteriores = generarAsignaciones(k, m)
+```
+
+Por hipótesis de inducción, $anteriores = A(k,m)$.
+
+Luego ejecuta:
+
+```scala
+for {
+  asignacion <- anteriores
+  aula       <- 0 until m
+} yield asignacion :+ aula
+```
+
+
+Para cada asignación de longitud $k$, se agrega cada posible aula $0, 1, \ldots, m-1$,
+obteniendo todas las asignaciones de longitud $k+1$.
+
+Por construcción:
+
+- Ninguna asignación válida es omitida.
+- Ninguna asignación inválida es generada.
+
+Por lo tanto:
+
+$$\texttt{generarAsignaciones}(k+1,m) = A(k+1,m)$$
+
+
+## Conclusión
+
+Se verificó el caso base y el paso inductivo. Por inducción estructural:
+
+$$\forall\, n \ge 0: \texttt{generarAsignaciones}(n,m) = A(n,m)$$
+
+Por lo tanto, la implementación de `generarAsignaciones` es correcta respecto a su
+especificación, ya que genera exactamente todas las asignaciones posibles de $n$ cursos
+en $m$ aulas.
+
 
 ---
 
-#### Ejemplo: El máximo de una lista
 
-Sea \$f : \text{List}\[\mathbb{N}] \to \mathbb{N}\$ la función que calcula el máximo de una lista no vacía.
+# Argumentación de corrección — Función `asignacionOptima`
 
-Programa en Scala:
+## Especificación
 
-```scala
-def maxLin(l: List[Int]): Int = {
-  if (l.tail.isEmpty) l.head
-  else math.max(maxLin(l.tail), l.head)
-}
-```
+Sea $A$ el conjunto de todas las asignaciones posibles de cursos a aulas.
+
+Sea además la función de costo:
+
+$$c : A \rightarrow \mathbb{N}$$
+
+donde:
+
+$$c(a) = \texttt{costoAsignacion}(cursos, aulas, d, a, w)$$
+
+La especificación de `asignacionOptima` consiste en retornar una asignación óptima $a^*$
+y su costo asociado, tales que:
+
+$$c(a^*) = \min_{a \in A}\, c(a)$$
 
 Queremos demostrar que:
 
-$$
-\forall n \in \mathbb{N} \setminus \{0\} :
-P_f(\text{List}(a_1, \ldots, a_n)) == f(\text{List}(a_1, \ldots, a_n))
-$$
+$$\texttt{asignacionOptima}(cursos, aulas, d, w) = (a^*, c(a^*))$$
 
-- **Caso base**: \$n=1\$.
+donde $a^*$ es una asignación de costo mínimo.
 
-$$
-P_f(\text{List}(a_1)) \to a_1 \quad \land \quad f(\text{List}(a_1)) = a_1
-$$
 
-- **Caso inductivo**: \$n=k+1\$.
 
-$$
-P_f(L) \to \text{math.max}(P_f(\text{List}(a_2, \ldots, a_{k+1})), a_1)
-$$
+## Paso 1: Generación de todas las asignaciones
 
-Dependiendo del mayor entre \$a_1\$ y \$b\$ (el máximo del resto de la lista), se cumple que \$P_f(L) == f(L)\$.
-
-**Conclusión**:
-
-$$
-\forall n \in \mathbb{N} \setminus \{0\} : P_f(\text{List}(a_1, \ldots, a_n)) == f(\text{List}(a_1, \ldots, a_n))
-$$
-
----
-
-### Argumentando sobre corrección de programas iterativos
-
-Para argumentar la corrección de programas iterativos, se debe formalizar cómo es la iteración:
-
-- Representación de un estado \$s\$.
-- Estado inicial \$s_0\$.
-- Estado final \$s_f\$.
-- Invariante de la iteración \$\text{Inv}(s)\$.
-- Transformación de estados \$\text{transformar}(s)\$.
-
-Programa iterativo genérico:
+La función ejecuta:
 
 ```scala
-def Pf(a: A): B = {
-  def Pf_iter(s: Estado): B =
-    if (esFinal(s)) respuesta(s) else Pf_iter(transformar(s))
-  Pf_iter(s0)
+val todas = generarAsignaciones(
+  cursos.length,
+  aulas.length
+)
+```
+
+Por la corrección demostrada previamente para `generarAsignaciones`:
+
+$$\texttt{generarAsignaciones}(n, m) = A$$
+
+Por lo tanto, la variable `todas` contiene exactamente todas las asignaciones posibles.
+
+
+
+## Paso 2: Asociación de cada asignación con su costo
+
+La función ejecuta:
+
+```scala
+todas.map { asignacion =>
+  (
+    asignacion,
+    costoAsignacion(cursos, aulas, d, asignacion, w)
+  )
 }
 ```
 
----
+Esto produce el conjunto:
 
-#### Ejemplo: Factorial Iterativo
+$$T = \{\, (a,\, c(a)) \mid a \in A \,\}$$
 
-```scala
-def Pf(n: Int): Int = {
-  def Pf_iter(i: Int, n: Int, ac: Int): Int =
-    if (i > n) ac else Pf_iter(i + 1, n, i * ac)
-  Pf_iter(1, n, 1)
-}
-```
+Es decir, para cada asignación posible se construye una tupla formada por:
 
-- Estado \$s = (i, n, ac)\$
-- Estado inicial \$s_0 = (1, n, 1)\$
-- Estado final: \$i = n+1\$
-- Invariante: \$\text{Inv}(i,n,ac) \equiv i \leq n+1 \land ac = (i-1)!\$
-- Transformación: \$(i, n, ac) \to (i+1, n, i \cdot ac)\$
+- La asignación.
+- Su costo correspondiente.
 
-Por inducción sobre la iteración, se demuestra que al llegar a \$s_f\$, \$ac = n!\$.
+Por lo tanto, ninguna asignación es omitida y cada costo es calculado correctamente
+mediante `costoAsignacion`.
 
----
 
-#### Ejemplo: El máximo de una lista
+
+## Paso 3: Selección del mínimo
+
+La función aplica:
 
 ```scala
-def maxIt(l: List[Int]): Int = {
-  def maxAux(max: Int, l: List[Int]): Int = {
-    if (l.isEmpty) max
-    else maxAux(math.max(max, l.head), l.tail)
-  }
-  maxAux(l.head, l.tail)
-}
+.minBy(_._2)
 ```
 
-- Estado \$s = (max, l)\$
-- Estado inicial \$s_0 = (a_1, \text{List}(a_2, \ldots, a_k))\$
-- Estado final: \$l = \text{List}()\$
-- Invariante: \$\text{Inv}(max, l) \equiv max = f(\text{prefijo})\$
-- Transformación: \$(max, l) \to (\text{math.max}(max, l.head), l.tail)\$
+La expresión `_._2` representa el segundo componente de cada tupla, es decir, el costo.
 
-Por inducción, al llegar al estado final, \$max = f(L)\$.
+Por definición de `minBy`, el resultado es una tupla $(a^*, c(a^*))$ tal que:
 
-**Conclusión**:
+$$c(a^*) \le c(a) \qquad \forall\, a \in A$$
 
-$$
-P_f(L) == f(L)
-$$
+Por lo tanto:
+
+$$c(a^*) = \min_{a \in A}\, c(a)$$
+
+
+
+## Conclusión
+
+La función:
+
+1. Genera todas las asignaciones posibles.
+2. Calcula correctamente el costo de cada una.
+3. Selecciona la asignación cuyo costo es mínimo.
+
+Por lo tanto:
+
+$$\texttt{asignacionOptima}(cursos, aulas, d, w) = (a^*, c(a^*))$$
+
+donde:
+
+$$c(a^*) = \min_{a \in A}\, c(a)$$
+
+En consecuencia, la implementación de `asignacionOptima` es correcta respecto a su
+especificación, ya que retorna exactamente una asignación óptima y su costo mínimo
+asociado.
+
+---
