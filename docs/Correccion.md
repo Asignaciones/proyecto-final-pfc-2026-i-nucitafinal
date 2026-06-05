@@ -19,7 +19,7 @@ La especificación de la función consiste en generar exactamente dicho conjunto
 Queremos demostrar que:
 
 $$
-\forall n \ge 0:
+\forall\, n \ge 0:
 \texttt{generarAsignaciones}(n,m)=A(n,m)
 $$
 
@@ -34,7 +34,8 @@ Si $n = 0$, la función ejecuta:
 Vector(Vector.empty[Int])
 ```
 
-y retorna $\{[]\}$.
+y retorna el conjunto que contiene únicamente la asignación vacía:
+$\{[]\}$.
 
 Cuando no existen cursos por asignar, la única asignación posible es la asignación vacía. Por definición:
 
@@ -128,7 +129,7 @@ $$c(a^*) = \min_{a \in A}\, c(a)$$
 
 Queremos demostrar que:
 
-$$\texttt{asignacionOptima}(cursos, aulas, d, w) = (a^*, c(a^*))$$
+`asignacionOptima(cursos,aulas,d,w)` =  $$ (a^{*}, c(a^{*}))$$
 
 donde $a^*$ es una asignación de costo mínimo.
 
@@ -210,7 +211,11 @@ La función:
 
 Por lo tanto:
 
-$$\texttt{asignacionOptima}(cursos, aulas, d, w) = (a^*, c(a^*))$$
+$$
+\texttt{asignacionOptima}(cursos, aulas, d, w)
+=
+(a^{*}, c(a^{*}))
+$$
 
 donde:
 
