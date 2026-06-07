@@ -1,6 +1,11 @@
 # Conclusiones
 
-**Integrantes:** [completar]
+## Integrantes del grupo
+
+- Adriana Milena Noscue Dagua
+- Sebastián Cucalón Astorquiza
+- Nicolle Camila Hoyos Puin
+- Santiago Torres Rojas
 
 ---
 
