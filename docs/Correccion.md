@@ -738,7 +738,6 @@ def generarAsignacionesPar(n: Int, m: Int): Vector[Asignacion] = {
   }
 }
 ```
-
 ### Demostración Teórica
 
 **Caso base ($n = 0$):** El único elemento de $\{0,\ldots,m-1\}^0$ es la secuencia vacía. Retornar `Vector(Vector.empty)` es correcto.

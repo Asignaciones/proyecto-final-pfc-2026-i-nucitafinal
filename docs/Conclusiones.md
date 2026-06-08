@@ -26,5 +26,3 @@ Presente aquí las conclusiones del proyecto. Como mínimo debe responder:
    el problema? ¿Qué cambiarían en su diseño si volvieran a empezar?
 
 ---
-
-[Completar con sus propias palabras]

@@ -741,7 +741,6 @@ cursos.indices ──► mitad = N/2
 ## Informe de proceso - Función `movilidadPar`
 
 ### Definición del Algoritmo
-
 ```scala
 def movilidadPar(cursos: Cursos, aulas: Aulas, d: Distancias,
                  a: Asignacion): Int = {
