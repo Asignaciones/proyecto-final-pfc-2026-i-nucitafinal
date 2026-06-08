@@ -642,3 +642,269 @@ flowchart TD
 ```
 ---
 
+## Informe de proceso - Función `choquesPar`
+
+### Definición del Algoritmo
+
+```scala
+def choquesPar(cursos: Cursos, a: Asignacion): Int = {
+  def contar(desde: Int, hasta: Int): Int =
+    (desde until hasta).flatMap { i =>
+      (i + 1 until cursos.length).map { j =>
+        if (
+          a(i) == a(j) &&
+            a(i) >= 0 &&
+            solapan(cursos(i), cursos(j))
+        ) 1
+        else 0
+      }
+    }.sum
+  val mitad = cursos.length / 2
+  val (izq, der) =
+    parallel(
+      contar(0, mitad),
+      contar(mitad, cursos.length)
+    )
+  izq + der
+}
+```
+
+Paraleliza el conteo de choques de horario dividiendo el rango externo de índices en dos mitades y ejecutando cada conteo de forma concurrente mediante `parallel`.
+
+### Explicación Paso a Paso y Proceso de Ejecución
+
+1. **Definición de la Función Auxiliar:** `contar(desde, hasta)` recorre todos los pares $(i, j)$ con $i \in [\text{desde}, \text{hasta})$ y $j \in (i, n)$, aplicando la misma lógica de la versión secuencial sobre el subrango indicado: verifica igualdad de aula, asignación válida y solapamiento.
+2. **Partición del Dominio:** Se calcula `mitad = cursos.length / 2`, dividiendo el rango externo $[0, n)$ en dos intervalos disjuntos y exhaustivos: $[0, \text{mitad})$ y $[\text{mitad}, n)$.
+3. **Ejecución Paralela:** Ambas mitades se evalúan concurrentemente con `parallel`, produciendo los conteos parciales `izq` y `der` de forma independiente.
+4. **Reducción:** Los conteos parciales se suman, obteniendo el total de choques global.
+
+```
+(0 until N) ──► mitad = N/2
+  ├── contar(0, mitad)   ──flatMap/map──► Vector(0,1,0,...) ──.sum──► izq ──┐
+  └── contar(mitad, N)   ──flatMap/map──► Vector(0,0,1,...) ──.sum──► der ──┴──► izq + der
+```
+
+### Complejidad
+
+* **Complejidad Temporal:** $\mathcal{O}(n^2 / 2)$ por hilo, $\mathcal{O}(n^2)$ en total. El número de pares evaluados por cada mitad es aproximadamente $\frac{n(n-1)}{4}$.
+* **Complejidad Espacial:** $\mathcal{O}(n^2)$ en el peor caso, por los vectores intermedios generados en cada mitad antes de la reducción `.sum`.
+
+---
+
+## Informe de proceso - Función `desperdicioPar`
+
+### Definición del Algoritmo
+
+```scala
+def desperdicioPar(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = {
+  def calcular(rango: Range): Int =
+    rango.map { i =>
+      if (
+        a(i) >= 0 &&
+          capAula(aulas(a(i))) >= estCurso(cursos(i))
+      )
+        capAula(aulas(a(i))) - estCurso(cursos(i))
+      else
+        0
+    }.sum
+  val mitad = cursos.length / 2
+  val (izq, der) =
+    parallel(
+      calcular(0 until mitad),
+      calcular(mitad until cursos.length)
+    )
+  izq + der
+}
+```
+
+Paraleliza el cálculo del desperdicio de capacidad dividiendo el vector de cursos en dos mitades independientes y evaluando cada una de forma concurrente.
+
+### Explicación Paso a Paso y Proceso de Ejecución
+
+1. **Definición de la Función Auxiliar:** `calcular(rango)` mapea cada índice $i$ del rango al excedente de capacidad del aula asignada sobre los estudiantes del curso. Si el curso no está asignado (`a(i) < 0`) o el aula es insuficiente (`cap < est`), contribuye con `0`.
+2. **Partición del Dominio:** El vector de cursos se divide en $[0, \text{mitad})$ y $[\text{mitad}, n)$, rangos disjuntos que cubren el dominio completo $[0, n)$.
+3. **Ejecución Paralela:** `parallel` evalúa `calcular` sobre ambos rangos de forma concurrente. Cada índice $i$ accede únicamente a `cursos(i)` y `aulas(a(i))`, por lo que no hay dependencias entre hilos.
+4. **Reducción:** Los desperdicios parciales se suman aprovechando la propiedad asociativa de la adición sobre índices independientes.
+
+```
+cursos.indices ──► mitad = N/2
+  ├── calcular(0 until mitad)   ──map──► Vector(d0, d1, ...) ──.sum──► izq ──┐
+  └── calcular(mitad until N)   ──map──► Vector(dk, dk+1,...) ──.sum──► der ──┴──► izq + der
+```
+
+### Complejidad
+
+* **Complejidad Temporal:** $\mathcal{O}(n/2)$ por hilo, $\mathcal{O}(n)$ en total. La evaluación de cada índice es independiente y de costo constante.
+* **Complejidad Espacial:** $\mathcal{O}(n)$ en total, por los vectores intermedios producidos por `.map` en ambas mitades antes de la reducción `.sum`.
+
+---
+
+## Informe de proceso - Función `movilidadPar`
+
+### Definición del Algoritmo
+
+```scala
+def movilidadPar(cursos: Cursos, aulas: Aulas, d: Distancias,
+                 a: Asignacion): Int = {
+  val cursosAsignados =
+    cursos.indices
+      .filter(i => a(i) >= 0)
+      .sortBy(i => iniCurso(cursos(i)))
+  val pares =
+    cursosAsignados
+      .sliding(2)
+      .toVector
+      .collect {
+        case Seq(i, j) => (i, j)
+      }
+  val mitad = pares.length / 2
+  def suma(v: Vector[(Int, Int)]): Int =
+    v.map { case (i, j) =>
+      d(a(i))(a(j))
+    }.sum
+  val (izq, der) =
+    parallel(
+      suma(pares.take(mitad)),
+      suma(pares.drop(mitad))
+    )
+  izq + der
+}
+
+```
+
+Paraleliza el cálculo del costo de movilidad dividiendo el vector de pares consecutivos de cursos en dos mitades y sumando las distancias de cada una de forma concurrente.
+
+### Explicación Paso a Paso y Proceso de Ejecución
+
+1. **Filtrado y Ordenamiento (Secuencial):** Se obtienen los índices de cursos con asignación válida ($\alpha_i \ge 0$), ordenados por hora de inicio, formando la secuencia $\sigma_0, \sigma_1, \ldots, \sigma_{k-1}$.
+2. **Construcción de Pares Consecutivos:** `.sliding(2)` genera los pares $(\sigma_j, \sigma_{j+1})$ para $j \in [0, k-2]$, representando los desplazamientos entre aulas contiguas en el tiempo.
+3. **Partición del Dominio:** El vector `pares` se divide con `take` y `drop` en dos mitades disjuntas. Cada par es independiente para el cómputo de su distancia, por lo que no hay dependencias entre hilos.
+4. **Ejecución Paralela:** `parallel` evalúa `suma` sobre cada mitad concurrentemente, produciendo los costos parciales `izq` y `der`.
+5. **Reducción:** Los costos parciales se suman para obtener el costo total de movilidad.
+
+```
+cursosAsignados ordenados por ini ──► sliding(2) ──► pares = [(σ0,σ1),(σ1,σ2),...]
+  ├── suma(pares.take(mitad))  ──map──► Vector(da, db,...) ──.sum──► izq ──┐
+  └── suma(pares.drop(mitad))  ──map──► Vector(dc, dd,...) ──.sum──► der ──┴──► izq + der
+```
+
+### Complejidad
+
+* **Complejidad Temporal:** $\mathcal{O}(n \log n)$ dominado por el ordenamiento inicial; la suma paralela es $\mathcal{O}(n/2)$ por hilo.
+* **Complejidad Espacial:** $\mathcal{O}(n)$, por el vector de pares generado antes de la división en mitades.
+
+---
+
+## Informe de proceso - Función `generarAsignacionesPar`
+
+### Definición del Algoritmo
+
+```scala
+def generarAsignacionesPar(n: Int, m: Int): Vector[Asignacion] = {
+  if (n == 0)
+    Vector(Vector.empty[Int])
+  else {
+    val mitad = m / 2
+    def construir(rango: Range): Vector[Asignacion] =
+      rango.flatMap { aula =>
+        generarAsignaciones(n - 1, m).map { asignacion =>
+          asignacion :+ aula
+        }
+      }.toVector
+    val (izq, der) =
+      parallel(
+        construir(0 until mitad),
+        construir(mitad until m)
+      )
+    izq ++ der
+  }
+}
+```
+
+Genera todas las asignaciones posibles en $\{0,\ldots,m-1\}^n$ paralelizando la construcción sobre las dos mitades del rango de aulas del nivel más externo.
+
+### Explicación Paso a Paso y Proceso de Ejecución
+
+1. **Caso Base:** Si $n = 0$, no hay cursos que asignar. Se retorna el vector con la única asignación posible: la asignación vacía.
+2. **Partición del Rango de Aulas:** Se calcula `mitad = m / 2`, dividiendo $[0, m)$ en $[0, \lfloor m/2 \rfloor)$ y $[\lfloor m/2 \rfloor, m)$.
+3. **Función Auxiliar `construir`:** Para cada valor de aula $a$ en su rango, invoca la versión secuencial `generarAsignaciones(n-1, m)` para obtener todas las asignaciones de los $n-1$ cursos restantes, y añade el valor de aula actual al final de cada una con `:+`.
+4. **Ejecución Paralela:** `parallel` ejecuta `construir` sobre ambas mitades del rango de aulas concurrentemente.
+5. **Combinación de Resultados:** Los vectores parciales se concatenan con `++`, produciendo el espacio completo $\{0,\ldots,m-1\}^n$.
+
+```
+generarAsignacionesPar(n, m)
+  ├── construir(0 until mitad)
+  │     └── ∀ aula ∈ [0,mitad): generarAsignaciones(n-1,m).map(_ :+ aula) ──► izq
+  └── construir(mitad until m)
+        └── ∀ aula ∈ [mitad,m): generarAsignaciones(n-1,m).map(_ :+ aula) ──► der
+                                                                                  ↓
+                                                                             izq ++ der
+```
+
+### Complejidad
+
+* **Complejidad Temporal:** $\mathcal{O}(m^n)$ en total; cada hilo construye $\mathcal{O}(m^n / 2)$ asignaciones.
+* **Complejidad Espacial:** $\mathcal{O}(m^n \cdot n)$, por el almacenamiento de todas las asignaciones de longitud $n$.
+
+---
+
+## Informe de proceso - Función `asignacionOptimaPar`
+
+### Definición del Algoritmo
+
+```scala
+def asignacionOptimaPar(cursos: Cursos, aulas: Aulas, d: Distancias,
+                        w: Pesos): (Asignacion, Int) = {
+  val todas =
+    generarAsignacionesPar(
+      cursos.length,
+      aulas.length
+    )
+  def mejor(
+             asignaciones: Vector[Asignacion]
+           ): (Asignacion, Int) =
+    asignaciones
+      .map { asignacion =>
+        (
+          asignacion,
+          costoAsignacion(
+            cursos,
+            aulas,
+            d,
+            asignacion,
+            w
+          )
+        )
+      }
+      .minBy(_._2)
+  val mitad = todas.length / 2
+  val (izq, der) =
+    parallel(
+      mejor(todas.take(mitad)),
+      mejor(todas.drop(mitad))
+    )
+  if (izq._2 <= der._2) izq
+  else der
+}
+```
+
+Paraleliza la búsqueda de la asignación de mínimo costo dividiendo el espacio completo de candidatos en dos mitades y encontrando el óptimo local de cada una de forma concurrente.
+
+### Explicación Paso a Paso y Proceso de Ejecución
+
+1. **Generación del Espacio de Búsqueda:** Se obtienen todas las asignaciones posibles mediante `generarAsignacionesPar`, asegurando que ningún candidato quede fuera de la evaluación.
+2. **Función Auxiliar `mejor`:** Mapea cada asignación a la tupla `(asignacion, costoAsignacion(...))` y selecciona la de menor costo mediante `.minBy(_._2)`.
+3. **Partición del Dominio:** El vector `todas` se divide en dos mitades disjuntas con `take(mitad)` y `drop(mitad)`.
+4. **Ejecución Paralela:** `parallel` evalúa `mejor` sobre cada mitad concurrentemente, produciendo el óptimo local de cada una.
+5. **Selección del Mínimo Global:** Se comparan los costos de ambos óptimos locales y se retorna el de menor valor con la comparación `if (izq._2 <= der._2) izq else der`.
+
+```
+todas ──► mitad = todas.length / 2
+  ├── mejor(todas.take(mitad))  ──map/minBy──► (α_izq, costo_izq) ──┐
+  └── mejor(todas.drop(mitad))  ──map/minBy──► (α_der, costo_der) ──┴──► min por costo
+```
+
+### Complejidad
+
+* **Complejidad Temporal:** $\mathcal{O}(m^n \cdot n)$ dominado por la generación; la búsqueda paralela evalúa $\mathcal{O}(m^n / 2)$ costos por hilo.
+* **Complejidad Espacial:** $\mathcal{O}(m^n \cdot n)$, por el almacenamiento del vector completo de asignaciones antes de la partición.
