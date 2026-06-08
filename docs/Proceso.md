@@ -694,7 +694,6 @@ Paraleliza el conteo de choques de horario dividiendo el rango externo de índic
 ## Informe de proceso - Función `desperdicioPar`
 
 ### Definición del Algoritmo
-
 ```scala
 def desperdicioPar(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = {
   def calcular(rango: Range): Int =

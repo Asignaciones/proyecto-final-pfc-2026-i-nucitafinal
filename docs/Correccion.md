@@ -545,7 +545,6 @@ asociado.
 ## Función `choquesPar`
 
 ### Código Evaluado
-
 ```scala
  def choquesPar(cursos: Cursos, a: Asignacion): Int = {
   def contar(desde: Int, hasta: Int): Int =
