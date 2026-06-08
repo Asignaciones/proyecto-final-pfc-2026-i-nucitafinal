@@ -541,3 +541,286 @@ especificación, ya que retorna exactamente una asignación óptima y su costo m
 asociado.
 
 ---
+
+## Función `choquesPar`
+
+### Código Evaluado
+```scala
+ def choquesPar(cursos: Cursos, a: Asignacion): Int = {
+  def contar(desde: Int, hasta: Int): Int =
+    (desde until hasta).flatMap { i =>
+      (i + 1 until cursos.length).map { j =>
+        if (
+          a(i) == a(j) &&
+            a(i) >= 0 &&
+            solapan(cursos(i), cursos(j))
+        ) 1
+        else 0
+      }
+    }.sum
+  val mitad = cursos.length / 2
+  val (izq, der) =
+    parallel(
+      contar(0, mitad),
+      contar(mitad, cursos.length)
+    )
+  izq + der
+}
+```
+
+### Demostración Teórica
+
+Sea $n$ = `cursos.length`. La especificación exige contar todos los pares $(i,j)$ con $i < j$ que compartan aula y se solapen. El conjunto completo a evaluar es:
+
+$$
+P = \{(i,j) \mid 0 \le i < j < n\}
+$$
+
+La función divide $P$ en dos subconjuntos según el índice externo $i$:
+
+$$
+P_{izq} = \{(i,j) \mid 0 \le i < \lfloor n/2 \rfloor,\ i < j < n\}
+$$
+
+$$
+P_{der} = \{(i,j) \mid \lfloor n/2 \rfloor \le i < n,\ i < j < n\}
+$$
+
+**Exhaustividad y disjunción:** Todo par $(i,j) \in P$ tiene un único índice externo $i$, que pertenece a exactamente uno de los dos rangos. Por lo tanto:
+
+$$
+P_{izq} \cap P_{der} = \emptyset \qquad \text{y} \qquad P_{izq} \cup P_{der} = P
+$$
+
+**Función indicadora:** En cada par evaluado, el condicional actúa como:
+
+$$
+\mathbb{I}(i,j) = \begin{cases} 1 & \text{si } \alpha_i = \alpha_j \ge 0 \text{ y } \text{solapan}(c_i, c_j) \\ 0 & \text{en caso contrario} \end{cases}
+$$
+
+**Combinación correcta:** Por la propiedad asociativa de la suma sobre conjuntos disjuntos:
+
+$$
+CH^\alpha_C = \sum_{(i,j) \in P_{izq}} \mathbb{I}(i,j) + \sum_{(i,j) \in P_{der}} \mathbb{I}(i,j) = \sum_{(i,j) \in P} \mathbb{I}(i,j)
+$$
+
+Por lo tanto, la función es **correcta**.
+
+---
+
+## 4. Función `desperdicioPar`
+
+### Código Evaluado
+
+```scala
+def desperdicioPar(cursos: Cursos, aulas: Aulas, a: Asignacion): Int = {
+  def calcular(rango: Range): Int =
+    rango.map { i =>
+      if (
+        a(i) >= 0 &&
+          capAula(aulas(a(i))) >= estCurso(cursos(i))
+      )
+        capAula(aulas(a(i))) - estCurso(cursos(i))
+      else
+        0
+    }.sum
+  val mitad = cursos.length / 2
+  val (izq, der) =
+    parallel(
+      calcular(0 until mitad),
+      calcular(mitad until cursos.length)
+    )
+  izq + der
+}
+```
+
+### Demostración Teórica
+
+La especificación define el desperdicio total como:
+
+$$
+DE^\alpha_{C,A} = \sum_{i=0}^{n-1} \mathbf{1}[\alpha_i \ge 0] \cdot \max\!\left(\text{cap}^A_{\alpha_i} - \text{est}^C_i,\ 0\right)
+$$
+
+**Corrección de `calcular`:** Para cada índice $i$ en el rango, la expresión condicional computa exactamente:
+
+$$
+d_i = \begin{cases} \text{cap}(\alpha_i) - \text{est}(c_i) & \text{si } \alpha_i \ge 0 \text{ y } \text{cap}(\alpha_i) \ge \text{est}(c_i) \\ 0 & \text{en caso contrario} \end{cases}
+$$
+
+lo cual es idéntico a $\mathbf{1}[\alpha_i \ge 0] \cdot \max(\text{cap}(\alpha_i) - \text{est}(c_i),\ 0)$.
+
+**Partición correcta:** Los rangos $[0, \lfloor n/2 \rfloor)$ y $[\lfloor n/2 \rfloor, n)$ son disjuntos y cubren $[0,n)$ completamente. Como cada término $d_i$ depende únicamente de su propio índice, la suma se descompone válidamente:
+
+$$
+DE^\alpha_{C,A} = \sum_{i=0}^{\lfloor n/2 \rfloor - 1} d_i + \sum_{i=\lfloor n/2 \rfloor}^{n-1} d_i
+$$
+
+Por lo tanto, la función es **correcta**.
+
+---
+
+##  Función `movilidadPar`
+
+### Código Evaluado
+
+```scala
+def movilidadPar(cursos: Cursos, aulas: Aulas, d: Distancias,
+                 a: Asignacion): Int = {
+  val cursosAsignados =
+    cursos.indices
+      .filter(i => a(i) >= 0)
+      .sortBy(i => iniCurso(cursos(i)))
+  val pares =
+    cursosAsignados
+      .sliding(2)
+      .toVector
+      .collect {
+        case Seq(i, j) => (i, j)
+      }
+  val mitad = pares.length / 2
+  def suma(v: Vector[(Int, Int)]): Int =
+    v.map { case (i, j) =>
+      d(a(i))(a(j))
+    }.sum
+  val (izq, der) =
+    parallel(
+      suma(pares.take(mitad)),
+      suma(pares.drop(mitad))
+    )
+  izq + der
+}
+```
+
+### Demostración Teórica
+
+La especificación define el costo de movilidad como:
+
+$$
+MV^\alpha_{C,A,D_A} = \sum_{j=0}^{k-2} D_A[\alpha_{\sigma_j}][\alpha_{\sigma_{j+1}}]
+$$
+
+donde $\sigma_0, \ldots, \sigma_{k-1}$ son los índices de cursos asignados ordenados por hora de inicio.
+
+**Corrección de la construcción de pares:** Filtrar por $\alpha_i \ge 0$ y ordenar por `iniCurso` reproduce exactamente la secuencia $\sigma_0, \ldots, \sigma_{k-1}$ de la especificación. El método `.sliding(2)` sobre dicha secuencia genera exactamente los pares $(\sigma_j, \sigma_{j+1})$ para $j \in [0, k-2]$, correspondiendo uno a uno con los términos de la sumatoria.
+
+**Partición correcta:** `pares.take(mitad)` y `pares.drop(mitad)` son subvectores disjuntos cuya unión reconstituye `pares` completo. La distancia de cada par se computa de forma independiente, por lo que:
+
+$$
+MV^\alpha = \sum_{p \in \text{pares}_{izq}} D_A[p] + \sum_{p \in \text{pares}_{der}} D_A[p]
+$$
+
+**Caso borde:** Con cero o un curso asignado, `pares` es vacío y ambas sumas retornan `0`, lo cual es correcto pues no hay desplazamientos posibles.
+
+Por lo tanto, la función es **correcta**.
+
+---
+
+## Función `generarAsignacionesPar`
+
+### Código Evaluado
+
+```scala
+def generarAsignacionesPar(n: Int, m: Int): Vector[Asignacion] = {
+  if (n == 0)
+    Vector(Vector.empty[Int])
+  else {
+    val mitad = m / 2
+    def construir(rango: Range): Vector[Asignacion] =
+      rango.flatMap { aula =>
+        generarAsignaciones(n - 1, m).map { asignacion => asignacion :+ aula }
+      }.toVector
+    val (izq, der) = parallel(
+                        construir(0 until mitad), 
+                        construir(mitad until m)
+      )
+    izq ++ der
+  }
+}
+```
+### Demostración Teórica
+
+**Caso base ($n = 0$):** El único elemento de $\{0,\ldots,m-1\}^0$ es la secuencia vacía. Retornar `Vector(Vector.empty)` es correcto.
+
+**Caso recursivo:** Se argumenta por inducción sobre $n$.
+
+*Hipótesis inductiva:* `generarAsignaciones(n-1, m)` retorna exactamente todas las asignaciones en $\{0,\ldots,m-1\}^{n-1}$.
+
+*Paso inductivo:* Para cada valor de aula $a \in [0, m)$, la función `construir` genera el conjunto:
+
+$$
+S_a = \{ \vec{\alpha} \mathbin{:+} a \mid \vec{\alpha} \in \{0,\ldots,m-1\}^{n-1} \}
+$$
+
+Los rangos $[0, \lfloor m/2 \rfloor)$ y $[\lfloor m/2 \rfloor, m)$ son disjuntos y cubren $[0, m)$, por lo que los conjuntos $S_a$ para distintos valores de $a$ son disjuntos entre sí. Su unión es:
+
+$$
+\bigcup_{a=0}^{m-1} S_a = \{0,\ldots,m-1\}^n
+$$
+
+con cardinalidad $m \cdot m^{n-1} = m^n$, coincidiendo con la especificación. La concatenación `izq ++ der` produce exactamente esta unión.
+
+Por lo tanto, la función es **correcta**.
+
+---
+
+## 7. Función `asignacionOptimaPar`
+
+### Código Evaluado
+
+```scala
+def asignacionOptimaPar(cursos: Cursos, aulas: Aulas, d: Distancias,
+                        w: Pesos): (Asignacion, Int) = {
+  val todas =
+    generarAsignacionesPar(
+      cursos.length,
+      aulas.length
+    )
+  def mejor(
+             asignaciones: Vector[Asignacion]
+           ): (Asignacion, Int) =
+    asignaciones
+      .map { asignacion =>
+        (
+          asignacion,
+          costoAsignacion(
+            cursos,
+            aulas,
+            d,
+            asignacion,
+            w
+          )
+        )
+      }
+      .minBy(_._2)
+  val mitad = todas.length / 2
+  val (izq, der) =
+    parallel(
+      mejor(todas.take(mitad)),
+      mejor(todas.drop(mitad))
+    )
+  if (izq._2 <= der._2) izq
+  else der
+}
+```
+
+### Demostración Teórica
+
+**Completitud del espacio de búsqueda:** Por la corrección de `generarAsignacionesPar`, el vector `todas` contiene exactamente todas las asignaciones en $\{0,\ldots,m-1\}^n$. Ningún candidato óptimo queda excluido.
+
+**Partición exhaustiva sin duplicados:** `todas.take(mitad)` y `todas.drop(mitad)` son sublistas disjuntas cuya unión es `todas`. Por tanto, toda asignación es evaluada exactamente una vez.
+
+**Corrección del mínimo global:** Sea $\alpha^* = \arg\min_\alpha CT^\alpha$. Este pertenece a exactamente una de las dos mitades. La función `mejor` encuentra el mínimo local en cada mitad:
+
+$$
+\alpha_{izq} = \arg\min_{\alpha \in M_{izq}} CT^\alpha, \qquad \alpha_{der} = \arg\min_{\alpha \in M_{der}} CT^\alpha
+$$
+
+Como $\alpha^*$ está en alguna mitad, su costo es el mínimo de esa mitad. La comparación final selecciona correctamente el menor entre los dos mínimos locales:
+
+$$
+\alpha^* = \begin{cases} \alpha_{izq} & \text{si } CT^{\alpha_{izq}} \le CT^{\alpha_{der}} \\ \alpha_{der} & \text{en caso contrario} \end{cases}
+$$
+
+Por lo tanto, la función es **correcta**.
+
