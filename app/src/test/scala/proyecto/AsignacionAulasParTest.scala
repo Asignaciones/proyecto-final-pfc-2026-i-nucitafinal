@@ -14,30 +14,292 @@ class AsignacionAulasParTest extends AnyFunSuite {
   val d1: Distancias = Vector(Vector(0, 3), Vector(3, 0))
   val w: Pesos      = (1000, 100, 1, 2)
 
-  test("choquesPar: asignacion [0,0,1] tiene 1 choque") {
-    assert(choquesPar(c1, Vector(0, 0, 1)) == 1)
+  // ChoquesPar
+  test("choquesPar sin choques en aulas distintas") {
+    val cursos = Vector(
+      ("A", 8, 10, 30),
+      ("B", 9, 11, 20)
+    )
+    val a = Vector(0, 1)
+
+    assert(choquesPar(cursos, a) == 0)
   }
 
-  test("choquesPar: asignacion [0,1,0] no tiene choques") {
-    assert(choquesPar(c1, Vector(0, 1, 0)) == 0)
+  test("choquesPar detecta un choque") {
+    val cursos = Vector(
+      ("A", 8, 10, 30),
+      ("B", 9, 11, 20)
+    )
+    val a = Vector(0, 0)
+
+    assert(choquesPar(cursos, a) == 1)
   }
 
-  test("desperdicioPar: asignacion [0,0,1] tiene desperdicio 25") {
-    assert(desperdicioPar(c1, a1, Vector(0, 0, 1)) == 25)
+  test("choquesPar detecta multiples choques") {
+    val cursos = Vector(
+      ("A", 8, 12, 30),
+      ("B", 9, 11, 20),
+      ("C", 10, 13, 25)
+    )
+    val a = Vector(0, 0, 0)
+
+    assert(choquesPar(cursos, a) == 3)
   }
 
-  test("movilidadPar: asignacion [0,0,1] tiene movilidad 3") {
-    assert(movilidadPar(c1, a1, d1, Vector(0, 0, 1)) == 3)
+  test("choquesPar ignora cursos sin asignar") {
+    val cursos = Vector(
+      ("A", 8, 10, 30),
+      ("B", 9, 11, 20)
+    )
+    val a = Vector(-1, -1)
+
+    assert(choquesPar(cursos, a) == 0)
   }
 
-  test("generarAsignacionesPar: 2 cursos y 2 aulas produce 4 asignaciones") {
-    assert(generarAsignacionesPar(2, 2).length == 4)
+  test("choquesPar con vector vacio") {
+    assert(choquesPar(Vector(), Vector()) == 0)
   }
 
-  test("asignacionOptimaPar: el costo de la optima no supera el de [0,1,0] (37)") {
-    val (_, costo) = asignacionOptimaPar(c1, a1, d1, w)
-    assert(costo <= 37)
+  // DesperdicioPar
+
+  test("desperdicioPar sin desperdicio") {
+    val cursos = Vector(("A", 8, 10, 30))
+    val aulas = Vector(("X", 30))
+    val a = Vector(0)
+
+    assert(desperdicioPar(cursos, aulas, a) == 0)
   }
 
+  test("desperdicioPar calcula desperdicio") {
+    val cursos = Vector(("A", 8, 10, 20))
+    val aulas = Vector(("X", 40))
+    val a = Vector(0)
+
+    assert(desperdicioPar(cursos, aulas, a) == 20)
+  }
+
+  test("desperdicioPar suma desperdicios") {
+    val cursos = Vector(
+      ("A", 8, 10, 20),
+      ("B", 10, 12, 30)
+    )
+    val aulas = Vector(
+      ("X", 40),
+      ("Y", 50)
+    )
+    val a = Vector(0, 1)
+
+    assert(desperdicioPar(cursos, aulas, a) == 40)
+  }
+
+  test("desperdicioPar ignora cursos sin asignar") {
+    val cursos = Vector(("A", 8, 10, 20))
+    val aulas = Vector(("X", 40))
+    val a = Vector(-1)
+
+    assert(desperdicioPar(cursos, aulas, a) == 0)
+  }
+
+  test("desperdicioPar aula insuficiente") {
+    val cursos = Vector(("A", 8, 10, 50))
+    val aulas = Vector(("X", 40))
+    val a = Vector(0)
+
+    assert(desperdicioPar(cursos, aulas, a) == 0)
+  }
+
+  // MovilidadPar
+
+  test("movilidadPar con un solo curso") {
+    val cursos = Vector(
+      ("A", 8, 10, 30)
+    )
+
+    val d = Vector(
+      Vector(0)
+    )
+
+    val a = Vector(0)
+
+    assert(
+      movilidadPar(cursos, Vector(), d, a) == 0
+    )
+  }
+
+  test("movilidadPar dos cursos") {
+    val cursos = Vector(
+      ("A", 8, 10, 30),
+      ("B", 10, 12, 20)
+    )
+
+    val d = Vector(
+      Vector(0, 5),
+      Vector(5, 0)
+    )
+
+    val a = Vector(0, 1)
+
+    assert(movilidadPar(cursos, Vector(), d, a) == 5)
+  }
+
+  test("movilidadPar suma desplazamientos") {
+    val cursos = Vector(
+      ("A", 8, 10, 30),
+      ("B", 10, 12, 20),
+      ("C", 12, 14, 25)
+    )
+
+    val d = Vector(
+      Vector(0, 5, 8),
+      Vector(5, 0, 3),
+      Vector(8, 3, 0)
+    )
+
+    val a = Vector(0, 1, 2)
+
+    assert(movilidadPar(cursos, Vector(), d, a) == 8)
+  }
+
+  test("movilidadPar ignora cursos no asignados") {
+    val cursos = Vector(
+      ("A", 8, 10, 30),
+      ("B", 10, 12, 20)
+    )
+
+    val d = Vector(Vector(0))
+
+    val a = Vector(0, -1)
+
+    assert(movilidadPar(cursos, Vector(), d, a) == 0)
+  }
+
+  test("movilidadPar con cursos vacios") {
+    assert(
+      movilidadPar(
+        Vector(),
+        Vector(),
+        Vector(),
+        Vector()
+      ) == 0
+    )
+  }
+
+  // generarAsignacionesPar
+
+  test("n=0 retorna asignacion vacia") {
+    assert(
+      generarAsignacionesPar(0, 2) ==
+        Vector(Vector())
+    )
+  }
+
+  test("un curso dos aulas") {
+    assert(
+      generarAsignacionesPar(1, 2).size == 2
+    )
+  }
+
+  test("dos cursos dos aulas") {
+    assert(
+      generarAsignacionesPar(2, 2).size == 4
+    )
+  }
+
+  test("tres cursos dos aulas") {
+    assert(
+      generarAsignacionesPar(3, 2).size == 8
+    )
+  }
+
+  test("longitud correcta de cada asignacion") {
+    val resultado =
+      generarAsignacionesPar(3, 2)
+
+    assert(
+      resultado.forall(_.length == 3)
+    )
+  }
+
+  // asignacionOptimaPar
+
+  test("asignacionOptimaPar retorna una asignacion") {
+    val resultado =
+      asignacionOptimaPar(
+        c1,
+        a1,
+        d1,
+        w
+      )
+
+    assert(resultado._1.nonEmpty)
+  }
+
+  test("costo no negativo") {
+    val resultado =
+      asignacionOptimaPar(
+        c1,
+        a1,
+        d1,
+        w
+      )
+
+    assert(resultado._2 >= 0)
+  }
+
+  test("longitud coincide con numero de cursos") {
+    val resultado =
+      asignacionOptimaPar(
+        c1,
+        a1,
+        d1,
+        w
+      )
+
+    assert(resultado._1.length == c1.length)
+  }
+
+  test("asignacionOptimaPar coincide con secuencial en caso pequeno") {
+    val cursos = Vector(
+      ("A", 8, 10, 20),
+      ("B", 10, 12, 15)
+    )
+
+    val aulas = Vector(
+      ("X", 30),
+      ("Y", 25)
+    )
+
+    val d = Vector(
+      Vector(0, 5),
+      Vector(5, 0)
+    )
+
+    val w = (1, 1, 1, 1)
+
+    assert(
+      asignacionOptimaPar(cursos, aulas, d, w) ==
+        asignacionOptima(cursos, aulas, d, w)
+    )
+  }
+
+  test("resultado coincide con version secuencial") {
+    val par =
+      asignacionOptimaPar(
+        c1,
+        a1,
+        d1,
+        w
+      )
+
+    val sec =
+      asignacionOptima(
+        c1,
+        a1,
+        d1,
+        w
+      )
+
+    assert(par == sec)
+  }
 
 }
