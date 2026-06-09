@@ -184,89 +184,90 @@ class AsignacionAulasParTest extends AnyFunSuite {
     )
   }
 
+  // ===========================================================================
   // generarAsignacionesPar
+  // ===========================================================================
 
-  test("n=0 retorna asignacion vacia") {
+  test("generarAsignacionesPar: n=0 retorna una única asignación vacía") {
+    val resultado =
+      generarAsignacionesPar(0, 3)
     assert(
-      generarAsignacionesPar(0, 2) ==
+      resultado ==
         Vector(Vector())
     )
   }
 
-  test("un curso dos aulas") {
-    assert(
-      generarAsignacionesPar(1, 2).size == 2
-    )
-  }
-
-  test("dos cursos dos aulas") {
-    assert(
-      generarAsignacionesPar(2, 2).size == 4
-    )
-  }
-
-  test("tres cursos dos aulas") {
-    assert(
-      generarAsignacionesPar(3, 2).size == 8
-    )
-  }
-
-  test("longitud correcta de cada asignacion") {
+  test("generarAsignacionesPar: un curso y tres aulas genera todas las opciones posibles") {
+    val esperado =
+      Vector(
+        Vector(0),
+        Vector(1),
+        Vector(2)
+      )
     val resultado =
-      generarAsignacionesPar(3, 2)
+      generarAsignacionesPar(1, 3)
 
     assert(
-      resultado.forall(_.length == 3)
+      resultado.toSet ==
+        esperado.toSet
     )
   }
 
+  test("generarAsignacionesPar: dos cursos y dos aulas genera exactamente las cuatro combinaciones posibles") {
+    val esperado =
+      Vector(
+        Vector(0, 0),
+        Vector(0, 1),
+        Vector(1, 0),
+        Vector(1, 1)
+      )
+    val resultado =
+      generarAsignacionesPar(2, 2)
+    assert(
+      resultado.toSet ==
+        esperado.toSet
+    )
+  }
+
+  test("generarAsignacionesPar: la cantidad total de asignaciones coincide con m elevado a n") {
+    val n = 3
+    val m = 2
+    val resultado =
+      generarAsignacionesPar(n, m)
+    assert(
+      resultado.length ==
+        math.pow(m, n).toInt
+    )
+  }
+
+  test("generarAsignacionesPar: todas las asignaciones tienen longitud correcta y aulas válidas") {
+    val n = 4
+    val m = 3
+    val resultado =
+      generarAsignacionesPar(n, m)
+    assert(
+      resultado.forall(asig =>
+        asig.length == n &&
+          asig.forall(aula =>
+            aula >= 0 && aula < m
+          )
+      )
+    )
+  }
+
+  // ===========================================================================
   // asignacionOptimaPar
+  // ===========================================================================
 
-  test("asignacionOptimaPar retorna una asignacion") {
-    val resultado =
-      asignacionOptimaPar(
-        c1,
-        a1,
-        d1,
-        w
-      )
+  test("asignacionOptimaPar: encuentra una solución óptima conocida en un caso simple") {
 
-    assert(resultado._1.nonEmpty)
-  }
-
-  test("costo no negativo") {
-    val resultado =
-      asignacionOptimaPar(
-        c1,
-        a1,
-        d1,
-        w
-      )
-
-    assert(resultado._2 >= 0)
-  }
-
-  test("longitud coincide con numero de cursos") {
-    val resultado =
-      asignacionOptimaPar(
-        c1,
-        a1,
-        d1,
-        w
-      )
-
-    assert(resultado._1.length == c1.length)
-  }
-
-  test("asignacionOptimaPar coincide con secuencial en caso pequeno") {
     val cursos = Vector(
-      ("A", 8, 10, 20),
-      ("B", 10, 12, 15)
+      ("A", 8, 10, 20)
     )
 
     val aulas = Vector(
       ("X", 30),
-      ("Y", 25)
+      ("Y", 40)
     )
 
     val d = Vector(
@@ -274,15 +275,104 @@ class AsignacionAulasParTest extends AnyFunSuite {
       Vector(5, 0)
     )
 
-    val w = (1, 1, 1, 1)
+    val pesos = (1000, 100, 1, 1)
+
+    val resultado =
+      asignacionOptimaPar(
+        cursos,
+        aulas,
+        d,
+        pesos
+      )
 
     assert(
-      asignacionOptimaPar(cursos, aulas, d, w) ==
-        asignacionOptima(cursos, aulas, d, w)
+      resultado == (Vector(0), 10)
     )
   }
 
-  test("resultado coincide con version secuencial") {
+  test("asignacionOptimaPar: encuentra el costo mínimo global entre todas las asignaciones posibles") {
+
+    val todas =
+      generarAsignacionesPar(
+        c1.length,
+        a1.length
+      )
+    val costoMinimo =
+      todas
+        .map(a =>
+          costoAsignacion(
+            c1,
+            a1,
+            d1,
+            a,
+            w
+          )
+        )
+        .min
+
+    val (_, costoOptimo) =
+      asignacionOptimaPar(
+        c1,
+        a1,
+        d1,
+        w
+      )
+    assert(
+      costoOptimo == costoMinimo
+    )
+  }
+
+  test("asignacionOptimaPar: la asignación encontrada pertenece al conjunto de soluciones generadas") {
+
+    val (asig, _) =
+      asignacionOptimaPar(
+        c1,
+        a1,
+        d1,
+        w
+      )
+    val todas =
+      generarAsignacionesPar(
+        c1.length,
+        a1.length
+      )
+    assert(
+      todas.contains(asig)
+    )
+  }
+
+  test("asignacionOptimaPar coincide con la versión secuencial en un caso pequeño") {
+
+    val cursos = Vector(
+      ("A", 8, 10, 20),
+      ("B", 10, 12, 15)
+    )
+    val aulas = Vector(
+      ("X", 30),
+      ("Y", 25)
+    )
+    val d = Vector(
+      Vector(0, 5),
+      Vector(5, 0)
+    )
+    val pesos = (1, 1, 1, 1)
+    assert(
+      asignacionOptimaPar(
+        cursos,
+        aulas,
+        d,
+        pesos
+      ) ==
+        asignacionOptima(
+          cursos,
+          aulas,
+          d,
+          pesos
+        )
+    )
+  }
+
+  test("asignacionOptimaPar coincide con la versión secuencial en el escenario principal de prueba") {
     val par =
       asignacionOptimaPar(
         c1,
@@ -290,7 +380,6 @@ class AsignacionAulasParTest extends AnyFunSuite {
         d1,
         w
       )
-
     val sec =
       asignacionOptima(
         c1,
@@ -298,8 +387,8 @@ class AsignacionAulasParTest extends AnyFunSuite {
         d1,
         w
       )
-
-    assert(par == sec)
+    assert(
+      par == sec
+    )
   }
-
 }

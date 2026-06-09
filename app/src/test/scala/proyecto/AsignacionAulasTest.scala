@@ -9,41 +9,41 @@ import AsignacionAulas._
 class AsignacionAulasTest extends AnyFunSuite {
 
   // Ejemplo 1 del enunciado
-  val c1: Cursos    = Vector(("M01", 4, 8, 25), ("M02", 6, 10, 30), ("M03", 12, 16, 20))
-  val a1: Aulas     = Vector(("E101", 30), ("E102", 40))
+  val c1: Cursos = Vector(("M01", 4, 8, 25), ("M02", 6, 10, 30), ("M03", 12, 16, 20))
+  val a1: Aulas = Vector(("E101", 30), ("E102", 40))
   val d1: Distancias = Vector(Vector(0, 3), Vector(3, 0))
-  val w: Pesos      = (1000, 100, 1, 2)
+  val w: Pesos = (1000, 100, 1, 2)
 
   // ===========================================================================
   // 1. PRUEBAS PARA LA FUNCIÓN: solapan
   // ===========================================================================
   test("solapan - Caso 1: Cursos se cruzan completamente (mismo horario)") {
-    val c1 = ("C1", 4, 8, 20)  // 8:00 - 10:00
-    val c2 = ("C2", 4, 8, 30)  // 8:00 - 10:00
+    val c1 = ("C1", 4, 8, 20) // 8:00 - 10:00
+    val c2 = ("C2", 4, 8, 30) // 8:00 - 10:00
     assert(solapan(c1, c2) === true)
   }
 
   test("solapan - Caso 2: Traslape parcial (el segundo inicia antes de que termine el primero)") {
-    val c1 = ("C1", 4, 8, 20)  // 8:00 - 10:00
+    val c1 = ("C1", 4, 8, 20) // 8:00 - 10:00
     val c2 = ("C2", 6, 10, 25) // 9:00 - 11:00
     assert(solapan(c1, c2) === true)
   }
 
   test("solapan - Caso 3: Cursos consecutivos exactos (no se solapan por ser intervalo abierto [ini, fin) )") {
-    val c1 = ("C1", 4, 8, 20)  // 8:00 - 10:00
+    val c1 = ("C1", 4, 8, 20) // 8:00 - 10:00
     val c2 = ("C2", 8, 12, 15) // 10:00 - 12:00
     assert(solapan(c1, c2) === false)
   }
 
   test("solapan - Caso 4: Completamente separados en el tiempo") {
-    val c1 = ("C1", 0, 4, 20)   // 6:00 - 8:00
+    val c1 = ("C1", 0, 4, 20) // 6:00 - 8:00
     val c2 = ("C2", 12, 16, 20) // 12:00 - 14:00
     assert(solapan(c1, c2) === false)
   }
 
   test("solapan - Caso 5: Un curso está contenido totalmente dentro de la duración del otro") {
     val c1 = ("C1", 2, 10, 40) // 7:00 - 11:00
-    val c2 = ("C2", 4, 6, 15)  // 8:00 - 9:00
+    val c2 = ("C2", 4, 6, 15) // 8:00 - 9:00
     assert(solapan(c1, c2) === true)
   }
 
@@ -97,7 +97,7 @@ class AsignacionAulasTest extends AnyFunSuite {
 
   test("capacidadFallida - Caso 2: Un curso excede la capacidad exacta de su aula asignada") {
     val anonymityCursos = Vector(("C0", 4, 8, 45)) // 45 estudiantes
-    val aulas = Vector(("E0", 40))                 // Capacidad 40
+    val aulas = Vector(("E0", 40)) // Capacidad 40
     val asignacion = Vector(0)
     assert(capacidadFallida(anonymityCursos, aulas, asignacion) === 1)
   }
@@ -151,8 +151,8 @@ class AsignacionAulasTest extends AnyFunSuite {
 
   test("desperdicio - Caso 4: Mezcla de curso óptimo, curso con desperdicio y curso sin asignar") {
     val anonymityCursos = Vector(
-      ("C0", 4, 8, 20),  // Aula 0 (35) -> desp = 15
-      ("C1", 4, 8, 35),  // Aula 1 (35) -> desp = 0
+      ("C0", 4, 8, 20), // Aula 0 (35) -> desp = 15
+      ("C1", 4, 8, 35), // Aula 1 (35) -> desp = 0
       ("C2", 12, 16, 10) // Sin asignar -> desp = 0
     )
     val aulas = Vector(("E0", 35), ("E1", 35))
@@ -180,7 +180,7 @@ class AsignacionAulasTest extends AnyFunSuite {
 
   test("movilidad - Caso 2: Cursos ordenados cronológicamente") {
     val anonymityCursos = Vector(
-      ("C0", 4, 8, 20),  // Inicia bloque 4 -> Aula 0
+      ("C0", 4, 8, 20), // Inicia bloque 4 -> Aula 0
       ("C1", 10, 14, 20) // Inicia bloque 10 -> Aula 1
     )
     val aulas = Vector(("E0", 30), ("E1", 30))
@@ -195,7 +195,7 @@ class AsignacionAulasTest extends AnyFunSuite {
   test("movilidad - Caso 3: Cursos desordenados en el vector de entrada (deben ser ordenados por hora de inicio)") {
     val anonymityCursos = Vector(
       ("C0", 12, 16, 20), // Inicia tarde (bloque 12) -> Aula 1
-      ("C1", 4, 8, 20)    // Inicia temprano (bloque 4) -> Aula 0
+      ("C1", 4, 8, 20) // Inicia temprano (bloque 4) -> Aula 0
     )
     val aulas = Vector(("E0", 30), ("E1", 30))
     val d = Vector(
@@ -210,7 +210,7 @@ class AsignacionAulasTest extends AnyFunSuite {
 
   test("movilidad - Caso 4: Tres cursos consecutivos pasando por diferentes aulas") {
     val anonymityCursos = Vector(
-      ("C0", 4, 8, 20),  // Inicia 4 -> Aula 0
+      ("C0", 4, 8, 20), // Inicia 4 -> Aula 0
       ("C1", 8, 12, 20), // Inicia 8 -> Aula 1
       ("C2", 12, 16, 20) // Inicia 12 -> Aula 2
     )
@@ -227,9 +227,9 @@ class AsignacionAulasTest extends AnyFunSuite {
 
   test("movilidad - Caso 5: Ignorar cursos que no están asignados") {
     val anonymityCursos = Vector(
-      ("C0", 4, 8, 20),   // Inicia 4 -> Aula 0
-      ("C1", 8, 12, 20),  // Inicia 8 -> Sin Asignar (-1)
-      ("C2", 12, 16, 20)  // Inicia 12 -> Aula 1
+      ("C0", 4, 8, 20), // Inicia 4 -> Aula 0
+      ("C1", 8, 12, 20), // Inicia 8 -> Sin Asignar (-1)
+      ("C2", 12, 16, 20) // Inicia 12 -> Aula 1
     )
     val aulas = Vector(("E0", 30), ("E1", 30))
     val d = Vector(
@@ -276,7 +276,7 @@ class AsignacionAulasTest extends AnyFunSuite {
 
   test("costoAsignacion - Caso 3: Impacto severo por pesos de capacidad fallida") {
     val anonymityCursos = Vector(("C0", 4, 8, 50)) // 50 estudiantes
-    val aulas = Vector(("E0", 30))                 // Capacidad 30
+    val aulas = Vector(("E0", 30)) // Capacidad 30
     val d = Vector(Vector(0))
     val pesos = (10, 500, 2, 1) // w_CF es 500
     val asignacion = Vector(0)
@@ -305,68 +305,163 @@ class AsignacionAulasTest extends AnyFunSuite {
 
 
 
-  // test nuevos funcion generarAsignaciones
+  // ===========================================================================
+  // PRUEBAS PARA LA FUNCIÓN: generarAsignaciones
+  // ===========================================================================
 
-  test("generarAsignaciones: 1 curso y 2 aulas genera exactamente 2 asignaciones") {
-    val resultado = generarAsignaciones(1, 2)
-    assert(resultado.length == 2)
-  }
+  test("generarAsignaciones - Caso 1: Sin cursos retorna una única asignación vacía") {
+    val resultado = generarAsignaciones(0, 3)
 
-  test("generarAsignaciones: 0 cursos devuelve una asignacion vacia") {
-    val resultado = generarAsignaciones(0, 5)
     assert(resultado == Vector(Vector()))
   }
 
-  test("generarAsignaciones: todas las asignaciones tienen longitud igual a n") {
-    val resultado = generarAsignaciones(4, 2)
-    assert(resultado.forall(asig => asig.length == 4))
+  test("generarAsignaciones - Caso 2: Un curso y tres aulas genera todas las opciones posibles") {
+    val resultado = generarAsignaciones(1, 3)
+
+    val esperado = Vector(
+      Vector(0),
+      Vector(1),
+      Vector(2)
+    )
+
+    assert(resultado.toSet == esperado.toSet)
   }
 
-  test("generarAsignaciones: todas las aulas generadas estan entre 0 y m-1") {
-    val resultado = generarAsignaciones(3, 4)
+  test("generarAsignaciones - Caso 3: Dos cursos y dos aulas genera exactamente las cuatro combinaciones posibles") {
+    val resultado = generarAsignaciones(2, 2)
+
+    val esperado = Vector(
+      Vector(0, 0),
+      Vector(0, 1),
+      Vector(1, 0),
+      Vector(1, 1)
+    )
+
+    assert(resultado.toSet == esperado.toSet)
+  }
+
+  test("generarAsignaciones - Caso 4: La cantidad total de asignaciones coincide con m^n") {
+    val n = 3
+    val m = 2
+
+    val resultado = generarAsignaciones(n, m)
+
+    assert(resultado.length == math.pow(m, n).toInt)
+  }
+
+  test("generarAsignaciones - Caso 5: Todas las asignaciones generadas tienen valores válidos y longitud correcta") {
+    val n = 4
+    val m = 3
+
+    val resultado = generarAsignaciones(n, m)
+
     assert(
       resultado.forall(asig =>
-        asig.forall(aula => aula >= 0 && aula < 4)
+        asig.length == n &&
+          asig.forall(aula => aula >= 0 && aula < m)
       )
     )
   }
+  // ===========================================================================
+  // PRUEBAS PARA LA FUNCIÓN: asignacionOptima
+  // ===========================================================================
 
-  test("generarAsignaciones: 2 cursos y 1 aula solo genera una asignacion") {
-    val resultado = generarAsignaciones(2, 1)
-    assert(resultado == Vector(Vector(0,0)))
-  }
-
-
-  // Test nuevos funcion asignacionOptima
-
-  test("asignacionOptima: devuelve una asignacion del mismo tamaño que cursos") {
-    val (asig, _) = asignacionOptima(c1, a1, d1, w)
-    assert(asig.length == c1.length)
-  }
-
-  test("asignacionOptima: el costo calculado coincide con costoAsignacion") {
-    val (asig, costo) = asignacionOptima(c1, a1, d1, w)
-    assert(costo == costoAsignacion(c1, a1, d1, asig, w))
-  }
-
-  test("asignacionOptima: devuelve una asignacion valida") {
-    val (asig, _) = asignacionOptima(c1, a1, d1, w)
-    assert(asig.forall(aula => aula >= 0 && aula < a1.length))
-  }
-
-  test("asignacionOptima: encuentra el costo minimo global") {
-    val todas = generarAsignaciones(c1.length, a1.length)
-    val costos = todas.map(a =>
-      costoAsignacion(c1, a1, d1, a, w)
+  test("asignacionOptima - Caso 1: Un único curso tiene una única asignación posible") {
+    val cursos = Vector(
+      ("C0", 4, 8, 20)
     )
-    val (_, costoOptimo) = asignacionOptima(c1, a1, d1, w)
-    assert(costoOptimo == costos.min)
+
+    val aulas = Vector(
+      ("E0", 30)
+    )
+
+    val distancias = Vector(
+      Vector(0)
+    )
+
+    val pesos = (1000, 100, 1, 1)
+
+    val (asig, costo) =
+      asignacionOptima(cursos, aulas, distancias, pesos)
+
+    assert(asig == Vector(0))
+    assert(costo == 10) // desperdicio = 30 - 20
   }
 
-  test("asignacionOptima: devuelve una asignacion perteneciente al conjunto generado") {
-    val (asig, _) = asignacionOptima(c1, a1, d1, w)
-    val todas = generarAsignaciones(c1.length, a1.length)
+  test("asignacionOptima - Caso 2: Evita un choque cuando existen aulas disponibles") {
+
+    val cursos = Vector(
+      ("C0", 4, 8, 20),
+      ("C1", 5, 9, 25)
+    )
+
+    val aulas = Vector(
+      ("E0", 30),
+      ("E1", 30)
+    )
+
+    val distancias = Vector(
+      Vector(0, 2),
+      Vector(2, 0)
+    )
+
+    val pesos = (1000, 100, 1, 1)
+
+    val (_, costo) =
+      asignacionOptima(cursos, aulas, distancias, pesos)
+
+    assert(costo < 1000)
+  }
+
+  test("asignacionOptima - Caso 3: El costo retornado corresponde al mínimo global entre todas las asignaciones") {
+
+    val todas =
+      generarAsignaciones(c1.length, a1.length)
+
+    val costoEsperado =
+      todas.map(a =>
+        costoAsignacion(c1, a1, d1, a, w)
+      ).min
+
+    val (_, costoOptimo) =
+      asignacionOptima(c1, a1, d1, w)
+
+    assert(costoOptimo == costoEsperado)
+  }
+
+  test("asignacionOptima - Caso 4: La asignación encontrada pertenece al espacio de soluciones generado") {
+
+    val (asig, _) =
+      asignacionOptima(c1, a1, d1, w)
+
+    val todas =
+      generarAsignaciones(c1.length, a1.length)
+
     assert(todas.contains(asig))
   }
 
+  test("asignacionOptima - Caso 5: En un problema pequeño encuentra exactamente una solución óptima conocida") {
+
+    val cursos = Vector(
+      ("C0", 4, 8, 20),
+      ("C1", 4, 8, 20)
+    )
+
+    val aulas = Vector(
+      ("E0", 20),
+      ("E1", 20)
+    )
+
+    val distancias = Vector(
+      Vector(0, 1),
+      Vector(1, 0)
+    )
+
+    val pesos = (1000, 100, 1, 1)
+
+    val (_, costo) =
+      asignacionOptima(cursos, aulas, distancias, pesos)
+
+    assert(costo == 1)
+  }
 }
